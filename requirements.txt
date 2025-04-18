@@ -1,0 +1,23 @@
+# Production Requirements for Godot Launcher
+PyQt6>=6.9.0
+PyQt6-Qt6>=6.9.0
+PyQt6_sip>=13.10.0
+requests>=2.32.3
+
+# Development Requirements
+# Dipendenze per test e sviluppo
+
+# Framework di test
+pytest>=8.3.5
+pytest-cov>=4.0.0
+pytest-mock>=3.14.0
+
+# Coverage
+coverage>=7.8.0
+
+# Formatting e linting
+pylint>=2.16.0
+black>=25.1.0  # Opzionale
+
+# Utility di sviluppo
+pytest-xdist>=3.1.0  # Per l'esecuzione parallela dei test 

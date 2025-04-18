@@ -1,0 +1,14 @@
+__pycache__/
+.venv/
+cache/
+.vscode/
+.cursor/
+
+.coverage
+launcher.log
+launcher_data.json
+
+tests/
+
+memory-bank/
+README.md
