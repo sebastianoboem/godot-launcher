@@ -42,6 +42,7 @@ Godot Launcher provides a centralized interface for managing Godot projects, eng
 ### Release
 
 Get the [Latest Release](https://github.com/sebastianoboem/godot-launcher/releases/latest)
+  - Your antivirus may detect the **no console** version as false positive due to the flag *console=False* used during build, but they are identical and safe.
 
 ### Manual
 
