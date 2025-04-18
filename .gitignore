@@ -13,4 +13,6 @@ build/
 dist/   
 scripts/
 memory-bank/
-README.md
+
+*.spec
+*.spec.py
