@@ -22,6 +22,9 @@ print(f"DEBUG: Project Root added to sys.path: {project_root}")
 print(f"DEBUG: sys.path includes:\n{sys.path}")
 # --- End Debug Prints ---
 
+# Importazione per versione
+from version import VERSION
+
 # Import local modules AFTER setting up logging
 try:
     # --- Logging Setup ---
@@ -58,6 +61,7 @@ try:
     logger.addHandler(console_handler)
 
     logging.info("++++ Launcher Application Started (PID: %d) ++++", os.getpid())
+    logging.info(f"Launcher Version: {VERSION}")
     logging.info(f"Python Version: {sys.version}")
     logging.info(f"Platform: {platform.system()} {platform.release()} ({platform.machine()})")
     # --- End Logging Setup ---
@@ -123,9 +127,8 @@ def main():
 
         # Removed placeholder icon check/creation logic
 
-        # Synchronize projects on startup if a default folder is configured
-        # Pass the DataManager instance directly
-        if data_manager.get_default_projects_folder():
+        # Synchronize projects on startup if a default folder is configured and sync_projects_startup è abilitato
+        if data_manager.get("sync_projects_startup", True) and data_manager.get_default_projects_folder():
             logging.info("Synchronizing projects on startup...")
             try:
                 synchronize_projects_with_default_folder(data_manager) # Pass instance

@@ -5,8 +5,8 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-from PyQt6.QtCore import Qt, QTimer, QSize, pyqtSlot  # Added QSize
-from PyQt6.QtGui import QFont, QIcon, QAction  # Added QIcon and QAction
+from PyQt6.QtCore import Qt, QTimer, QSize, pyqtSlot, QUrl  # Spostato QUrl qui
+from PyQt6.QtGui import QFont, QIcon, QAction, QDesktopServices  # Rimosso QUrl da qui
 from PyQt6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -25,6 +25,7 @@ from PyQt6.QtWidgets import (
     QSpacerItem,
     QSizePolicy,
     QDialog,
+    QLabel,
 )
 
 # Import GUI classes and DataManager
@@ -44,6 +45,8 @@ from gui.styles import (  # Import of new styles
 )
 from project_handler import synchronize_projects_with_default_folder
 from utils import get_icon # Added for icon loading
+from version import VERSION, RELEASES_URL # Importo informazioni versione
+from check_update import UpdateChecker # Importo il modulo per il controllo aggiornamenti
 
 # --- Constants ---
 WINDOW_TITLE = "Godot Launcher"
@@ -65,7 +68,7 @@ class MainWindow(QMainWindow):
         super().__init__(parent)
         self.data_manager = data_manager # Store reference to DataManager
         logging.info("Initializing MainWindow...")
-        self.setWindowTitle(WINDOW_TITLE)
+        self.setWindowTitle(f"{WINDOW_TITLE} {VERSION}")
         self.setGeometry(100, 100, 1050, 750) # Initial position and size
         
         # Create a status bar before initializing the UI
@@ -75,7 +78,19 @@ class MainWindow(QMainWindow):
         # Apply the main style (dark theme)
         self.setStyleSheet(MAIN_STYLE)
         
+        # Stato controllo aggiornamenti
+        self.update_checker = None
+        
         self.init_ui()
+        
+        # Aggiungi l'etichetta versione alla status bar
+        self.add_version_label()
+        
+        # Controlla aggiornamenti all'avvio se impostato
+        if self.data_manager.get("check_updates_startup", True):
+            # Ritarda il controllo degli aggiornamenti per dare priorità al caricamento dell'interfaccia
+            QTimer.singleShot(1000, self.check_for_updates)
+            
         logging.info("MainWindow initialized.")
 
     def init_ui(self):
@@ -410,3 +425,61 @@ class MainWindow(QMainWindow):
              QMessageBox.critical(self, "Save Error", f"Could not save application data on exit:\n{e}")
              # Should we still close? Maybe ask the user? For now, accept the close event anyway.
              event.accept()
+
+    def add_version_label(self):
+        """Aggiunge l'etichetta della versione alla status bar."""
+        version_label = QLabel(f"Versione: {VERSION}")
+        version_label.setStyleSheet(f"color: {COLORS['muted']}; padding-right: 5px;")
+        self.statusBar_widget.addPermanentWidget(version_label)  # Usa addPermanentWidget per posizionare a destra
+
+    def check_for_updates(self):
+        """Controlla aggiornamenti all'avvio se impostato."""
+        if self.update_checker and self.update_checker.isRunning():
+            logging.info("Controllo aggiornamenti già in corso...")
+            return
+            
+        logging.info("Controllo aggiornamenti all'avvio...")
+        self.update_checker = UpdateChecker()
+        
+        # Collega i segnali
+        self.update_checker.update_available.connect(self.on_update_available)
+        self.update_checker.no_update_available.connect(self.on_no_update_available)
+        self.update_checker.check_error.connect(self.on_update_check_error)
+        
+        # Avvia il controllo
+        self.update_checker.start()
+        
+    def on_update_available(self, new_version: str, url: str, published_date: str):
+        """Gestisce la notifica di aggiornamento disponibile."""
+        logging.info(f"Aggiornamento disponibile: {new_version} (rilasciato: {published_date})")
+        
+        # Mostra notifica nella status bar
+        self.show_status_message(f"Nuova versione disponibile: {new_version} (rilasciato: {published_date})", 10000)
+        
+        # Aggiorna UI se necessario (es. aggiungere un pulsante per scaricare)
+        message = (f"È disponibile una nuova versione del launcher!\n\n"
+                  f"Versione attuale: {VERSION}\n"
+                  f"Nuova versione: {new_version}\n"
+                  f"Data rilascio: {published_date}\n\n"
+                  f"Visita la pagina di download?")
+        
+        reply = QMessageBox.information(
+            self,
+            "Aggiornamento Disponibile",
+            message,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            # Apri URL nel browser predefinito
+            QDesktopServices.openUrl(QUrl(url))
+    
+    def on_no_update_available(self):
+        """Gestisce la notifica di nessun aggiornamento disponibile."""
+        logging.info("Nessun aggiornamento disponibile")
+        self.show_status_message("Launcher aggiornato all'ultima versione disponibile", 5000)
+    
+    def on_update_check_error(self, error_msg: str):
+        """Gestisce gli errori durante il controllo aggiornamenti."""
+        logging.warning(f"Errore durante il controllo aggiornamenti: {error_msg}")
+        self.show_status_message("Impossibile controllare aggiornamenti", 5000)
