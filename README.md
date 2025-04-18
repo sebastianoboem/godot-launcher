@@ -47,7 +47,7 @@ Get the [Latest Release](https://github.com/sebastianoboem/godot-launcher/releas
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/GodotLauncher.git
+   git clone https://github.com/sebastianoboem/godot-launcher.git
    cd GodotLauncher
    ```
 
