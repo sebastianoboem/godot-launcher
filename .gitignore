@@ -9,6 +9,8 @@ launcher.log
 launcher_data.json
 
 tests/
-
+build/
+dist/   
+scripts/
 memory-bank/
 README.md
