@@ -49,7 +49,7 @@ Get the [Latest Release](https://github.com/sebastianoboem/godot-launcher/releas
 1. Clone the repository:
    ```
    git clone https://github.com/sebastianoboem/godot-launcher.git
-   cd GodotLauncher
+   cd godot-launcher
    ```
 
 2. Create and activate a virtual environment (recommended):
