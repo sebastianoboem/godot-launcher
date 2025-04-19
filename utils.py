@@ -308,25 +308,26 @@ def extract_zip(zip_path: Union[str, Path], destination_dir: Union[str, Path], r
     Extracts a ZIP archive, handling common addon structures intelligently.
 
     Extraction Logic:
-    1. If the ZIP contains only 'addons/*', extracts the contents of 'addons' into destination_dir.
-    2. If remove_common_prefix=True and the ZIP contains only 'root-folder/addons/*',
-       extracts the contents of 'addons' into destination_dir.
-    3. If remove_common_prefix=True and the ZIP contains only 'root-folder/*' (without 'addons'),
-       extracts the contents of 'root-folder' into destination_dir.
-    4. Otherwise, extracts the entire content of the ZIP into destination_dir.
+    1. Extract the entire archive to a temporary directory
+    2. For each level of the extracted directory (including the root):
+        - If a folder named "addons" is found:
+            - If it's not a compressed file: extract it to the project root and stop
+            - If it's a compressed file: extract it and restart the search
+        - Otherwise: continue to the next directory level
+    3. If no "addons" folder is found, extract everything to the addons/ directory in the project
 
     Args:
         zip_path: Path to the ZIP file.
         destination_dir: Path to the directory where files should be extracted.
-        remove_common_prefix: If True, attempts to remove a single top-level directory
-                              before extracting (handles cases 2 and 3).
+        remove_common_prefix: If True, attempts smart extraction described above.
+                              If False, extracts the entire ZIP as-is.
 
     Returns:
         True if extraction was successful, False otherwise.
     """
     try:
         logging.info(f"Starting ZIP extraction: '{zip_path}' -> '{destination_dir}' (Remove Prefix: {remove_common_prefix})")
-        # Converti le stringhe in oggetti Path
+        # Convert strings to Path objects
         zip_path_obj = Path(zip_path)
         destination_dir_obj = Path(destination_dir)
         
@@ -336,16 +337,145 @@ def extract_zip(zip_path: Union[str, Path], destination_dir: Union[str, Path], r
 
         # Ensure the final destination directory exists
         destination_dir_obj.mkdir(parents=True, exist_ok=True)
-
-        # Extract the zip file
-        with zipfile.ZipFile(str(zip_path_obj)) as zf:
-            zf.extractall(str(destination_dir_obj))
         
-        logging.info(f"ZIP extraction completed successfully: {zip_path} -> {destination_dir}")
-        return True
+        # If we don't need smart extraction, just extract everything
+        if not remove_common_prefix:
+            with zipfile.ZipFile(str(zip_path_obj)) as zf:
+                zf.extractall(str(destination_dir_obj))
+            logging.info(f"ZIP extraction completed successfully (full extract): {zip_path}")
+            return True
+            
+        # Create a temporary directory for the extraction process
+        temp_dir = tempfile.mkdtemp(prefix="godotlauncher_extract_")
+        try:
+            # First step: Extract the entire archive to the temporary directory
+            with zipfile.ZipFile(str(zip_path_obj)) as zf:
+                zf.extractall(temp_dir)
+            
+            # Function to scan directories recursively searching for "addons" folder
+            def find_and_process_addons(current_dir: Path, level: int = 0) -> bool:
+                logging.debug(f"Scanning directory level {level}: {current_dir}")
+                
+                # Look for "addons" directory at the current level
+                addons_dir = current_dir / "addons"
+                if addons_dir.exists():
+                    logging.info(f"Found 'addons' directory at level {level}: {addons_dir}")
+                    
+                    # Check if this is actually a ZIP file (compressed folder)
+                    try:
+                        # Try to open it as a ZIP file
+                        if addons_dir.is_file() and zipfile.is_zipfile(addons_dir):
+                            logging.info(f"The 'addons' found at {addons_dir} is a compressed file. Extracting...")
+                            
+                            # Extract this ZIP to a new temporary directory and restart the search
+                            nested_temp_dir = tempfile.mkdtemp(prefix="godotlauncher_nested_")
+                            try:
+                                with zipfile.ZipFile(addons_dir) as nested_zf:
+                                    nested_zf.extractall(nested_temp_dir)
+                                
+                                # Restart the search with the extracted content
+                                return find_and_process_addons(Path(nested_temp_dir), level + 1)
+                            finally:
+                                # Clean up the nested temp directory if needed
+                                try:
+                                    shutil.rmtree(nested_temp_dir)
+                                except Exception as e:
+                                    logging.warning(f"Failed to clean up nested temp dir {nested_temp_dir}: {e}")
+                    except Exception as e:
+                        logging.debug(f"Error checking if 'addons' is a ZIP file: {e}")
+                    
+                    # If we're here, it's a regular directory named "addons" - this is what we want
+                    # Extract its CONTENTS directly to the project root
+                    if addons_dir.is_dir():
+                        logging.info(f"Extracting contents of 'addons' directory to {destination_dir_obj}")
+                        for item in addons_dir.iterdir():
+                            if item.is_dir():
+                                # For directories, use shutil.copytree
+                                dest_path = destination_dir_obj / item.name
+                                logging.debug(f"Copying directory: {item} -> {dest_path}")
+                                shutil.copytree(item, dest_path, dirs_exist_ok=True)
+                            else:
+                                # For files, use shutil.copy2
+                                dest_path = destination_dir_obj / item.name
+                                logging.debug(f"Copying file: {item} -> {dest_path}")
+                                shutil.copy2(item, dest_path)
+                        return True
+                
+                # Check for ZIP files named "addons.zip" or similar
+                for item in current_dir.iterdir():
+                    if item.is_file() and item.name.lower() in ['addons.zip', 'addons']:
+                        try:
+                            if zipfile.is_zipfile(item):
+                                logging.info(f"Found file named '{item.name}' that is a ZIP file. Extracting...")
+                                nested_temp_dir = tempfile.mkdtemp(prefix="godotlauncher_nested_")
+                                try:
+                                    with zipfile.ZipFile(item) as nested_zf:
+                                        nested_zf.extractall(nested_temp_dir)
+                                    
+                                    # Restart the search with the extracted content
+                                    return find_and_process_addons(Path(nested_temp_dir), level + 1)
+                                finally:
+                                    try:
+                                        shutil.rmtree(nested_temp_dir)
+                                    except Exception as e:
+                                        logging.warning(f"Failed to clean up nested temp dir {nested_temp_dir}: {e}")
+                        except Exception as e:
+                            logging.debug(f"Error checking if '{item.name}' is a ZIP file: {e}")
+                
+                # If no "addons" dir found at this level, recursively check subdirectories
+                for item in current_dir.iterdir():
+                    if item.is_dir():
+                        # Recursively process the subdirectory
+                        if find_and_process_addons(item, level + 1):
+                            return True
+                
+                # If we reach here, no "addons" directory found in this branch
+                return False
+            
+            # Start the addons directory search
+            addons_found = find_and_process_addons(Path(temp_dir))
+            
+            # If no addons directory was found, extract everything to addons/
+            if not addons_found:
+                logging.info("No 'addons' directory found. Extracting to addons/ directory.")
+                addons_dir = destination_dir_obj / 'addons'
+                addons_dir.mkdir(parents=True, exist_ok=True)
+                
+                # Get the contents of the temp directory
+                temp_path = Path(temp_dir)
+                if len(list(temp_path.iterdir())) == 1:
+                    # If there's only one item and it's a directory, extract its contents
+                    single_item = next(temp_path.iterdir())
+                    if single_item.is_dir():
+                        # Extract the contents of the single directory to addons/
+                        for item in single_item.iterdir():
+                            if item.is_dir():
+                                shutil.copytree(item, addons_dir / item.name, dirs_exist_ok=True)
+                            else:
+                                shutil.copy2(item, addons_dir / item.name)
+                    else:
+                        # Single file - copy it to addons/
+                        shutil.copy2(single_item, addons_dir / single_item.name)
+                else:
+                    # Multiple items - copy all to addons/
+                    for item in temp_path.iterdir():
+                        if item.is_dir():
+                            shutil.copytree(item, addons_dir / item.name, dirs_exist_ok=True)
+                        else:
+                            shutil.copy2(item, addons_dir / item.name)
+            
+            logging.info(f"ZIP extraction completed successfully")
+            return True
+            
+        finally:
+            # Always clean up the temporary directory
+            try:
+                shutil.rmtree(temp_dir)
+            except Exception as e:
+                logging.warning(f"Failed to clean up temp dir {temp_dir}: {e}")
     
     except Exception as e:
-        logging.error(f"Error during ZIP extraction: {e}")
+        logging.error(f"Error during ZIP extraction: {e}", exc_info=True)
         return False
 
 
