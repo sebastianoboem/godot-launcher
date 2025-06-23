@@ -601,7 +601,7 @@ class SettingsDialog(QDialog):
         self.github_thread.start()
 
     def on_releases_fetched(self, releases: list):
-        """Populates the versions combo box with fetched GitHub releases."""
+        """Populates the versions combo box with fetched GitHub releases, including pre-releases."""
         logging.info(f"Received {len(releases)} releases from GitHub.")
         self.versions_combo.clear()
         if not releases:
@@ -610,11 +610,10 @@ class SettingsDialog(QDialog):
             return
 
         added_count = 0
-        # Filter for stable or rc releases and add them to the combo box
+        # Aggiungi tutte le release (stabili, RC, pre-release)
         for release in releases:
             tag = release.get("tag_name")
-            # Simple check for stability markers in tag name
-            if tag and ("stable" in tag or "rc" in tag):
+            if tag:
                 self.versions_combo.addItem(tag, userData=release) # Store full release data
                 added_count += 1
 
@@ -623,8 +622,8 @@ class SettingsDialog(QDialog):
             self.download_status_label.setText(f"Download Status: Select a version ({added_count} found).")
             self.on_github_version_selected() # Update download button state
         else:
-            self.versions_combo.addItem("No stable/RC releases found.")
-            self.download_status_label.setText("Download Status: No stable/RC releases found.")
+            self.versions_combo.addItem("No releases found.")
+            self.download_status_label.setText("Download Status: No releases found.")
 
     def on_releases_fetch_error(self, error_msg: str):
         """Handles errors during the GitHub releases fetch."""

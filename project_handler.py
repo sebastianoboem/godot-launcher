@@ -26,7 +26,7 @@ from api_clients import fetch_asset_details_sync  # Per ExtensionInstaller
 
 # Constants
 DEFAULT_ICON_NAME = "icon.svg"
-GODOT_ICON_URL = "https://raw.githubusercontent.com/godotengine/godot/master/icon.svg" # Official Godot icon URL
+GODOT_ICON_URL = "https://raw.githubusercontent.com/godotengine/godot-builds/main/icon.svg" # Official Godot icon URL
 
 
 # --- Godot Path Validation and Launching Functions ---

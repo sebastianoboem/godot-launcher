@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Windows portable release with two executable versions and portable package
 
 ### Changed
+- Now all Godot releases, including pre-releases (dev, beta, RC, etc.), are shown and can be downloaded from the Settings dialog
 - Improved UI interaction by automatically updating manual path field when selecting Godot version
 - Optimized settings UI loading with immediate initialization
 - Standardized all user text, comments, and log messages to English

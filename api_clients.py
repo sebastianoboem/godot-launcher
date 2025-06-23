@@ -7,7 +7,7 @@ from PyQt6.QtCore import QThread, pyqtSignal
 
 # --- API Constants ---
 ASSET_LIB_API_BASE = "https://godotengine.org/asset-library/api"
-GITHUB_API_RELEASES = "https://api.github.com/repos/godotengine/godot/releases"
+GITHUB_API_RELEASES = "https://api.github.com/repos/godotengine/godot-builds/releases"
 
 
 # --- Godot Asset Library API Client ---
