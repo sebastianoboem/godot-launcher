@@ -3,7 +3,7 @@ version.py - Contiene informazioni sulla versione del Godot Launcher
 """
 
 # Versione attuale del launcher - modifica qui per aggiornare la versione dell'applicazione
-VERSION = "v1.0.0-dev1"
+VERSION = "v1.0.0-dev2"
 
 # Nome del repository GitHub per controllare gli aggiornamenti
 GITHUB_REPO = "sebastianoboem/godot-launcher"
