@@ -138,14 +138,14 @@ To generate single-file executables (standalone, no external dependencies):
 
 1. Make sure you have installed all dependencies and PyInstaller:
    ```
-pip install -r requirements.txt
-pip install pyinstaller
+   pip install -r requirements.txt
+   pip install pyinstaller
    ```
 
 2. Run these commands from the project root:
    ```
-pyinstaller --noconfirm --windowed --onefile --name "GodotLauncher-windows" --icon=gui/styles/icon.ico main.py
-pyinstaller --noconfirm --console --onefile --name "GodotLauncher-windows-console" --icon=gui/styles/icon.ico main.py
+   pyinstaller --noconfirm --windowed --onefile --name "GodotLauncher-windows" --icon=gui/styles/icon.ico main.py
+   pyinstaller --noconfirm --console --onefile --name "GodotLauncher-windows-console" --icon=gui/styles/icon.ico main.py
    ```
    - The first command generates the single-file executable without console (`GodotLauncher-windows.exe`).
    - The second command generates the single-file executable with console (`GodotLauncher-windows-console.exe`).
