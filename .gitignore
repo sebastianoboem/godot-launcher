@@ -15,3 +15,5 @@ scripts/
 memory-bank/
 
 *.spec.py
+
+*.bat
