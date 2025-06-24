@@ -14,5 +14,4 @@ dist/
 scripts/
 memory-bank/
 
-*.spec
 *.spec.py
