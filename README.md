@@ -132,24 +132,24 @@ Feel free to [open up a poll](https://github.com/sebastianoboem/godot-launcher/d
   - Try to be as much detailed as possible.
   - Include some example.
 
-## Build Eseguibile (Windows)
+## Windows Executable Build
 
-Per generare eseguibili single-file (standalone, nessuna dipendenza esterna):
+To generate single-file executables (standalone, no external dependencies):
 
-1. Assicurati di aver installato tutte le dipendenze e PyInstaller:
+1. Make sure you have installed all dependencies and PyInstaller:
    ```
 pip install -r requirements.txt
 pip install pyinstaller
    ```
 
-2. Esegui questi comandi dalla root del progetto:
+2. Run these commands from the project root:
    ```
 pyinstaller --noconfirm --windowed --onefile --name "GodotLauncher-windows" --icon=gui/styles/icon.ico main.py
 pyinstaller --noconfirm --console --onefile --name "GodotLauncher-windows-console" --icon=gui/styles/icon.ico main.py
    ```
-   - Il primo comando genera l'eseguibile single-file senza console (`GodotLauncher-windows.exe`).
-   - Il secondo comando genera l'eseguibile single-file con console (`GodotLauncher-windows-console.exe`).
-   - L'opzione `--icon` è opzionale.
-   - Gli eseguibili verranno generati nella cartella `dist/`.
+   - The first command generates the single-file executable without console (`GodotLauncher-windows.exe`).
+   - The second command generates the single-file executable with console (`GodotLauncher-windows-console.exe`).
+   - The `--icon` option is optional.
+   - The executables will be generated in the `dist/` folder.
 
-3. Puoi personalizzare ulteriormente il file `.spec` generato per includere risorse aggiuntive.
+3. You can further customize the generated `.spec` file to include additional resources.
