@@ -3,6 +3,7 @@ PyQt6>=6.9.0
 PyQt6-Qt6>=6.9.0
 PyQt6_sip>=13.10.0
 requests>=2.32.3
+pyinstaller>=6.14.1
 
 # Development Requirements
 # Dipendenze per test e sviluppo
