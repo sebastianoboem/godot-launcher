@@ -1,4 +1,5 @@
-# Godot Launcher
+# DEPRECATED - This is no longer supported
+## Godot Launcher
 
 A desktop application built with Python that simplifies the Godot Engine development environment management.
 
